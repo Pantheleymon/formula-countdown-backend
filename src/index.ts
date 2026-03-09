@@ -34,7 +34,8 @@ app.get(
 
     const currentDate: Date = new Date();
 
-    const showMap: boolean = req.query?.showMap === "true";
+    // TODO: добавить отображение трассы
+    // const showMap: boolean = req.query?.showMap === "true";
     const showPractise: boolean = req.query?.showPractise === "true";
     const showSprint: boolean = req.query?.showSprint === "true";
     const showQualification: boolean = req.query?.showQualification === "true";
