@@ -1,4 +1,4 @@
-import { createCanvas } from "canvas";
+import { createCanvas, registerFont } from "canvas";
 import express from "express";
 import { RaceApiResponse } from "@f1api/sdk";
 
@@ -76,6 +76,24 @@ app.get(
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext("2d");
 
+    registerFont(
+      __filename +
+        "../../../assets/fonts/Montserrat_Font_Family/Montserrat Bold 700.ttf",
+      {
+        family: "Montserrat",
+        weight: "bold",
+      },
+    );
+
+    registerFont(
+      __filename +
+        "../../../assets/fonts/Montserrat_Font_Family/Montserrat Regular 400.ttf",
+      {
+        family: "Montserrat",
+        weight: "normal",
+      },
+    );
+
     // фон
     ctx.fillStyle = "#0a0a0a";
     ctx.fillRect(0, 0, width, height);
@@ -87,18 +105,18 @@ app.get(
     ctx.fillStyle = "white";
 
     // заголовок
-    ctx.font = "normal 14px Arial";
+    ctx.font = "normal 12px Montserrat";
     ctx.fillText(`Round ${race.round} / ${race.raceName}`, 60, y, 320);
 
     y += 40;
 
     // заголовок
-    ctx.font = "bold 42px Arial";
+    ctx.font = "bold 42px Montserrat";
     ctx.fillText("WEEKEND", 60, y);
 
     y += 40;
 
-    ctx.font = "normal 42px Arial";
+    ctx.font = "normal 42px Montserrat";
     ctx.fillText("SCHEDULE", 60, y);
 
     y += 80;
@@ -121,8 +139,8 @@ app.get(
         return;
       }
       // тип сессии
-      ctx.font = "bold 32px Arial";
-      ctx.fillText(type.toUpperCase(), 60, y, 200);
+      ctx.font = "bold 32px Montserrat";
+      ctx.fillText(type.toUpperCase(), 60, y, 220);
 
       const sessionDate = new Date(`${date}T${time}`);
 
@@ -131,7 +149,7 @@ app.get(
         const diffTime = sessionDate.getTime() - currentDate.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        ctx.font = "normal 20px Arial";
+        ctx.font = "normal 20px Montserrat";
         ctx.fillText(
           diffDays ? `in ${diffDays} days` : diffDays === 0 ? "today" : "ended",
           300,
@@ -140,7 +158,7 @@ app.get(
         );
       }
 
-      y += 40;
+      y += 30;
 
       // форматируем дату и время
       const formattedDate = new Date(date)
@@ -157,7 +175,7 @@ app.get(
       });
 
       // выводим дату
-      ctx.font = "normal 18px Arial";
+      ctx.font = "normal 18px Montserrat";
       ctx.fillText(
         (formattedDate || "") + " - " + (formattedTime || ""),
         60,
