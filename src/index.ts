@@ -1,4 +1,4 @@
-import { createCanvas, registerFont } from "canvas";
+import sharp from "sharp";
 import express from "express";
 import { RaceApiResponse } from "@f1api/sdk";
 
@@ -81,155 +81,182 @@ app.get(
     // const circuitName = circuit?.circuitName;
     // const country = circuit?.country;
 
-    // создаем канвас и контекст для рисования
-    const canvas = createCanvas(width, height);
-    const ctx = canvas.getContext("2d");
-
-    // масштабируем и настраиваем канвас для лучшего качества
-    ctx.scale(scale, scale);
-
-    ctx.antialias = "subpixel";
-    ctx.patternQuality = "best";
-    ctx.quality = "best";
-    ctx.textDrawingMode = "path";
-
-    ctx.imageSmoothingEnabled = true;
-
     // ширина колонки для колоночной системы
     const columnWidth: number = width / 12;
-
-    // регистрируем шрифты
-    registerFont(
-      __filename +
-        "../../../assets/fonts/Montserrat_Font_Family/Montserrat Bold 700.ttf",
-      {
-        family: "Montserrat",
-        weight: "bold",
-      },
-    );
-
-    registerFont(
-      __filename +
-        "../../../assets/fonts/Montserrat_Font_Family/Montserrat Regular 400.ttf",
-      {
-        family: "Montserrat",
-        weight: "normal",
-      },
-    );
-
-    registerFont(
-      __filename +
-        "../../../assets/fonts/Montserrat_Font_Family/Montserrat Light 300.ttf",
-      {
-        family: "Montserrat",
-        weight: "300",
-      },
-    );
-
-    // фон
-    ctx.fillStyle = "#0a0a0a";
-    ctx.fillRect(0, 0, width, height);
 
     // отступ для системных элементов
     let y = (height / 8) * 3;
     let x = columnWidth * 2;
 
-    // цвет для текста
-    ctx.fillStyle = "white";
+    const svg = `
+      <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
 
-    // название гранпри
-    ctx.font = "300 10px Montserrat";
-    ctx.fillText(
-      `Round ${race.round} / ${race.raceName}`,
-      x,
-      y,
-      columnWidth * 8,
-    );
+        <style>
 
-    y += 40;
+          @font-face {
+            font-family: "Montserrat";
+            src: url("file://${process.cwd()}/assets/fonts/Montserrat-Regular.ttf");
+            font-weight: 400;
+          }
 
-    // заголовок "Weekend Schedule"
-    ctx.font = "bold 32px Montserrat";
-    ctx.fillText("WEEKEND", x, y, columnWidth * 8);
+          @font-face {
+            font-family: "Montserrat";
+            src: url("file://${process.cwd()}/assets/fonts/Montserrat-Bold.ttf");
+            font-weight: 700;
+          }
 
-    y += 30;
+          @font-face {
+            font-family: "Montserrat";
+            src: url("file://${process.cwd()}/assets/fonts/Montserrat-Light.ttf");
+            font-weight: 300;
+          }
 
-    ctx.font = "300 32px Montserrat";
-    ctx.fillText("SCHEDULE", x, y, columnWidth * 8);
+          text {
+            font-family: "Montserrat";
+          }
 
-    y += 50;
+        </style>
 
-    // выводим расписание сессий
-    sortedSchedule.forEach(({ type, date, time }) => {
-      if (!date || !time) {
-        return;
-      }
+        <rect width="100%" height="100%" fill="#0a0a0a"/>
 
-      if (type === "fp1" && !showPractise) {
-        return;
-      }
-      if (type === "qualy" && !showQualification) {
-        return;
-      }
-      if (type === "race" && !showRace) {
-        return;
-      }
-      if ((type === "sprintRace" || type === "sprintQualy") && !showSprint) {
-        return;
-      }
+        <text
+          x="${x}"
+          y="${y - 10}"
+          font-size="20"
+          font-weight="300"
+          fill="white"
+        >
+          Round ${race.round} / ${race.raceName}
+        </text>
 
-      // тип сессии
-      ctx.font = "bold 24px Montserrat";
-      ctx.fillText(type.toUpperCase(), x, y, columnWidth * 6);
+        <text
+          x="${x}"
+          y="${y + 60}"
+          font-size="72"
+          font-weight="700"
+          fill="white"
+        >
+          WEEKEND
+        </text>
 
-      // дата и время сессии
-      const sessionDate = new Date(`${date}T${time}`);
+        <text
+          x="${x}"
+          y="${y + 120}"
+          font-size="72"
+          font-weight="300"
+          fill="white"
+        >
+          SCHEDULE
+        </text>
 
-      if (showCountDown) {
-        // сколько дней осталось до сессии
-        const diffTime = sessionDate.getTime() - currentDate.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        ${createRows()}
 
-        ctx.font = "normal 16px Montserrat";
-        ctx.fillText(
-          diffDays ? `in ${diffDays} days` : diffDays === 0 ? "today" : "ended",
-          x + columnWidth * 6,
-          y,
-          columnWidth * 4,
-        );
-      }
+      </svg>`;
 
-      y += 20;
+    /**
+     * Функция для создания строк сессий гранпри
+     * @returns
+     */
+    function createRows(): string {
+      let y = (height / 8) * 3 + 240;
 
-      // форматируем дату
-      const formattedDate = new Date(date)
-        .toLocaleDateString("en-US", {
-          day: "2-digit",
-          month: "short",
-        })
-        .toUpperCase();
+      let rows: string = "";
 
-      // форматируем время
-      const formattedTime = sessionDate.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
+      // выводим расписание сессий
+      sortedSchedule.forEach(({ type, date, time }) => {
+        if (!date || !time) {
+          return;
+        }
+
+        if (type === "fp1" && !showPractise) {
+          return;
+        }
+        if (type === "qualy" && !showQualification) {
+          return;
+        }
+        if (type === "race" && !showRace) {
+          return;
+        }
+        if ((type === "sprintRace" || type === "sprintQualy") && !showSprint) {
+          return;
+        }
+
+        // дата и время сессии
+        const sessionDate = new Date(`${date}T${time}`);
+
+        let countdown = "";
+
+        if (showCountDown) {
+          // сколько дней осталось до сессии
+          const diffTime = sessionDate.getTime() - currentDate.getTime();
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+          const label =
+            diffDays > 0
+              ? `in ${diffDays} days`
+              : diffDays === 0
+                ? "today"
+                : "ended";
+
+          countdown = `
+            <text
+              x="${x + columnWidth * 6}"
+              y="${y}"
+              font-size="32"
+              font-weight="400"
+              fill="white"
+            >
+              ${label}
+            </text>
+            `;
+        }
+
+        // форматируем дату
+        const formattedDate = new Date(date)
+          .toLocaleDateString("en-US", {
+            day: "2-digit",
+            month: "short",
+          })
+          .toUpperCase();
+
+        // форматируем время
+        const formattedTime = sessionDate.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+
+        // выводим дату и время
+        rows += `
+          <text
+            x="${x}"
+            y="${y}"
+            font-size="48"
+            font-weight="700"
+            fill="white"
+          >
+            ${type.toUpperCase()}
+          </text>
+
+          ${countdown}
+
+          <text
+            x="${x}"
+            y="${y + 40}"
+            font-size="36"
+            font-weight="300"
+            fill="white"
+          >
+            ${formattedDate} - ${formattedTime}
+          </text>`;
+
+        y += 120;
       });
 
-      // выводим дату и время
-      ctx.font = "300 18px Montserrat";
-      ctx.fillText(
-        (formattedDate || "") + " - " + (formattedTime || ""),
-        x,
-        y,
-        400,
-      );
+      return rows;
+    }
 
-      y += 50;
-    });
-
-    // отправляем PNG
-    const buffer = canvas.toBuffer("image/png");
+    const buffer = await sharp(Buffer.from(svg)).png().toBuffer();
 
     res.set("Content-Type", "image/png");
     res.send(buffer);
