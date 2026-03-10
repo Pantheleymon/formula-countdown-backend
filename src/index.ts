@@ -76,6 +76,8 @@ app.get(
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext("2d");
 
+    const columnWidth: number = width / 12;
+
     registerFont(
       __filename +
         "../../../assets/fonts/Montserrat_Font_Family/Montserrat Bold 700.ttf",
@@ -94,32 +96,47 @@ app.get(
       },
     );
 
+    registerFont(
+      __filename +
+        "../../../assets/fonts/Montserrat_Font_Family/Montserrat Light 300.ttf",
+      {
+        family: "Montserrat",
+        weight: "300",
+      },
+    );
+
     // фон
     ctx.fillStyle = "#0a0a0a";
     ctx.fillRect(0, 0, width, height);
 
     // отступ для системных элементов
-    let y = height / 3 - 80;
+    let y = (height / 8) * 3;
+    let x = columnWidth * 2;
 
     // цвет для текста
     ctx.fillStyle = "white";
 
-    // заголовок
-    ctx.font = "normal 12px Montserrat";
-    ctx.fillText(`Round ${race.round} / ${race.raceName}`, 60, y, 320);
+    // название гранпри
+    ctx.font = "300 10px Montserrat";
+    ctx.fillText(
+      `Round ${race.round} / ${race.raceName}`,
+      x,
+      y,
+      columnWidth * 8,
+    );
 
     y += 40;
 
     // заголовок
-    ctx.font = "bold 42px Montserrat";
-    ctx.fillText("WEEKEND", 60, y);
+    ctx.font = "bold 32px Montserrat";
+    ctx.fillText("WEEKEND", x, y, columnWidth * 8);
 
-    y += 40;
+    y += 30;
 
-    ctx.font = "normal 42px Montserrat";
-    ctx.fillText("SCHEDULE", 60, y);
+    ctx.font = "300 32px Montserrat";
+    ctx.fillText("SCHEDULE", x, y, columnWidth * 8);
 
-    y += 80;
+    y += 50;
 
     sortedSchedule.forEach(({ type, date, time }) => {
       if (!date || !time) {
@@ -139,8 +156,8 @@ app.get(
         return;
       }
       // тип сессии
-      ctx.font = "bold 32px Montserrat";
-      ctx.fillText(type.toUpperCase(), 60, y, 220);
+      ctx.font = "bold 24px Montserrat";
+      ctx.fillText(type.toUpperCase(), x, y, columnWidth * 6);
 
       const sessionDate = new Date(`${date}T${time}`);
 
@@ -149,16 +166,16 @@ app.get(
         const diffTime = sessionDate.getTime() - currentDate.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        ctx.font = "normal 20px Montserrat";
+        ctx.font = "normal 16px Montserrat";
         ctx.fillText(
           diffDays ? `in ${diffDays} days` : diffDays === 0 ? "today" : "ended",
-          300,
+          x + columnWidth * 6,
           y,
-          200,
+          columnWidth * 4,
         );
       }
 
-      y += 30;
+      y += 20;
 
       // форматируем дату и время
       const formattedDate = new Date(date)
@@ -175,15 +192,15 @@ app.get(
       });
 
       // выводим дату
-      ctx.font = "normal 18px Montserrat";
+      ctx.font = "300 18px Montserrat";
       ctx.fillText(
         (formattedDate || "") + " - " + (formattedTime || ""),
-        60,
+        x,
         y,
         400,
       );
 
-      y += 60;
+      y += 50;
     });
 
     // отправляем PNG
