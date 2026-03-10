@@ -27,10 +27,12 @@ app.get(
     },
     res: any,
   ) => {
-    const height: number = req.query?.height
-      ? parseInt(req.query?.height)
-      : 1920;
-    const width: number = req.query?.width ? parseInt(req.query?.width) : 1060;
+    const scale = 2;
+
+    const height: number =
+      (req.query?.height ? parseInt(req.query?.height) : 1920) * scale;
+    const width: number =
+      (req.query?.width ? parseInt(req.query?.width) : 1060) * scale;
 
     const currentDate: Date = new Date();
 
@@ -75,6 +77,15 @@ app.get(
 
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext("2d");
+
+    ctx.scale(scale, scale);
+
+    ctx.antialias = "subpixel";
+    ctx.patternQuality = "best";
+    ctx.quality = "best";
+    ctx.textDrawingMode = "path";
+
+    ctx.imageSmoothingEnabled = true;
 
     const columnWidth: number = width / 12;
 
