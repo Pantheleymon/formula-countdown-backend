@@ -1,6 +1,7 @@
 import sharp from "sharp";
 import express from "express";
 import fs from "fs";
+import path from "path";
 import { RaceApiResponse } from "@f1api/sdk";
 
 /**
@@ -92,21 +93,28 @@ app.get(
     // объявляем шрифты и конвертируем их в base64 для использования в svg
     const montserratRegular = fs
       .readFileSync(
-        `${process.cwd()}/public/assets/fonts/Montserrat_Font_Family/Montserrat-Regular-400.ttf`,
+        path.join(
+          __dirname,
+          "../public/assets/fonts/Montserrat_Font_Family/Montserrat-Regular-400.ttf",
+        ),
       )
       .toString("base64");
     const montserratBold = fs
       .readFileSync(
-        `${process.cwd()}/public/assets/fonts/Montserrat_Font_Family/Montserrat-Bold-700.ttf`,
+        path.join(
+          __dirname,
+          "../public/assets/fonts/Montserrat_Font_Family/Montserrat-Bold-700.ttf",
+        ),
       )
       .toString("base64");
     const montserratLight = fs
       .readFileSync(
-        `${process.cwd()}/public/assets/fonts/Montserrat_Font_Family/Montserrat-Light-300.ttf`,
+        path.join(
+          __dirname,
+          "../public/assets/fonts/Montserrat_Font_Family/Montserrat-Light-300.ttf",
+        ),
       )
       .toString("base64");
-
-    console.log(montserratRegular, montserratBold, montserratLight);
 
     const svg = `
       <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
