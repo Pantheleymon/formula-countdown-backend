@@ -95,19 +95,19 @@ app.get(
 
           @font-face {
             font-family: "Montserrat";
-            src: url("file://${process.cwd()}/assets/fonts/Montserrat-Regular.ttf");
+            src: url("file://${process.cwd()}/assets/fonts/Montserrat Regular 400.ttf");
             font-weight: 400;
           }
 
           @font-face {
             font-family: "Montserrat";
-            src: url("file://${process.cwd()}/assets/fonts/Montserrat-Bold.ttf");
+            src: url("file://${process.cwd()}/assets/fonts/Montserrat Bold 700.ttf");
             font-weight: 700;
           }
 
           @font-face {
             font-family: "Montserrat";
-            src: url("file://${process.cwd()}/assets/fonts/Montserrat-Light.ttf");
+            src: url("file://${process.cwd()}/assets/fonts/Montserrat Light 300.ttf");
             font-weight: 300;
           }
 
