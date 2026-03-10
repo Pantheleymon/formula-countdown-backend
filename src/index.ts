@@ -1,7 +1,5 @@
 import sharp from "sharp";
 import express from "express";
-import fs from "fs";
-import path from "path";
 import { RaceApiResponse } from "@f1api/sdk";
 
 /**
@@ -90,59 +88,15 @@ app.get(
     let y = (height / 8) * 3;
     let x = columnWidth * 2;
 
-    // объявляем шрифты и конвертируем их в base64 для использования в svg
-    const montserratRegular = fs
-      .readFileSync(
-        path.join(
-          __dirname,
-          "../public/assets/fonts/Montserrat_Font_Family/Montserrat-Regular-400.ttf",
-        ),
-      )
-      .toString("base64");
-    const montserratBold = fs
-      .readFileSync(
-        path.join(
-          __dirname,
-          "../public/assets/fonts/Montserrat_Font_Family/Montserrat-Bold-700.ttf",
-        ),
-      )
-      .toString("base64");
-    const montserratLight = fs
-      .readFileSync(
-        path.join(
-          __dirname,
-          "../public/assets/fonts/Montserrat_Font_Family/Montserrat-Light-300.ttf",
-        ),
-      )
-      .toString("base64");
-
     const svg = `
       <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
 
         <style>
-
-          @font-face {
-            font-family: "Montserrat";
-            src: url(data:font/ttf;base64,${montserratRegular}) format('truetype');
-            font-weight: 400;
-          }
-
-          @font-face {
-            font-family: "Montserrat";
-            src: url(data:font/ttf;base64,${montserratBold}) format('truetype');
-            font-weight: 700;
-          }
-
-          @font-face {
-            font-family: "Montserrat";
-            src: url(data:font/ttf;base64,${montserratLight}) format('truetype');
-            font-weight: 300;
-          }
+          @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&amp;display=swap");
 
           text {
             font-family: "Montserrat";
           }
-
         </style>
 
         <rect width="100%" height="100%" fill="#0a0a0a"/>
