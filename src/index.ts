@@ -2,6 +2,9 @@ import { createCanvas, registerFont } from "canvas";
 import express from "express";
 import { RaceApiResponse } from "@f1api/sdk";
 
+/**
+ * Интерфейс для расписания сессий гранпри
+ */
 export interface IRaceSchedule {
   type: string;
   date: string;
@@ -44,11 +47,13 @@ app.get(
     const showRace: boolean = req.query?.showRace === "true";
     const showCountDown: boolean = req.query?.showCountDown === "true";
 
+    // получаем данные о следующем гранпри
     const response = await fetch("https://f1api.dev/api/current/next");
     const data: RaceApiResponse = await response.json();
 
     const race = data?.race[0];
 
+    // порядок отображения сессий
     const order: Array<keyof typeof race.schedule> = [
       "fp1",
       "fp2",
@@ -59,6 +64,7 @@ app.get(
       "race",
     ];
 
+    // сортируем сессии в нужном порядке
     const sortedSchedule: IRaceSchedule[] = order.map((item): IRaceSchedule => {
       return {
         type: item,
@@ -75,9 +81,11 @@ app.get(
     // const circuitName = circuit?.circuitName;
     // const country = circuit?.country;
 
+    // создаем канвас и контекст для рисования
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext("2d");
 
+    // масштабируем и настраиваем канвас для лучшего качества
     ctx.scale(scale, scale);
 
     ctx.antialias = "subpixel";
@@ -87,8 +95,10 @@ app.get(
 
     ctx.imageSmoothingEnabled = true;
 
+    // ширина колонки для колоночной системы
     const columnWidth: number = width / 12;
 
+    // регистрируем шрифты
     registerFont(
       __filename +
         "../../../assets/fonts/Montserrat_Font_Family/Montserrat Bold 700.ttf",
@@ -138,7 +148,7 @@ app.get(
 
     y += 40;
 
-    // заголовок
+    // заголовок "Weekend Schedule"
     ctx.font = "bold 32px Montserrat";
     ctx.fillText("WEEKEND", x, y, columnWidth * 8);
 
@@ -149,6 +159,7 @@ app.get(
 
     y += 50;
 
+    // выводим расписание сессий
     sortedSchedule.forEach(({ type, date, time }) => {
       if (!date || !time) {
         return;
@@ -166,10 +177,12 @@ app.get(
       if ((type === "sprintRace" || type === "sprintQualy") && !showSprint) {
         return;
       }
+
       // тип сессии
       ctx.font = "bold 24px Montserrat";
       ctx.fillText(type.toUpperCase(), x, y, columnWidth * 6);
 
+      // дата и время сессии
       const sessionDate = new Date(`${date}T${time}`);
 
       if (showCountDown) {
@@ -188,7 +201,7 @@ app.get(
 
       y += 20;
 
-      // форматируем дату и время
+      // форматируем дату
       const formattedDate = new Date(date)
         .toLocaleDateString("en-US", {
           day: "2-digit",
@@ -196,13 +209,14 @@ app.get(
         })
         .toUpperCase();
 
+      // форматируем время
       const formattedTime = sessionDate.toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
       });
 
-      // выводим дату
+      // выводим дату и время
       ctx.font = "300 18px Montserrat";
       ctx.fillText(
         (formattedDate || "") + " - " + (formattedTime || ""),
