@@ -3,6 +3,7 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 import { RaceApiResponse } from "@f1api/sdk";
+import { exec } from "child_process";
 
 /**
  * Интерфейс для расписания сессий гранпри
@@ -90,14 +91,26 @@ app.get(
     let y = (height / 8) * 3;
     let x = columnWidth * 2;
 
+    // устанавливаем font-config
+    const configFilePath = path.resolve("src", "fonts.conf");
+    process.env.FONTCONFIG_FILE = configFilePath;
+    exec("fc-cache -fv");
+
     // Подключаем необходимые шрифты
     function getFontPath(fontName: string): string {
-      const fontPath = path.join(
-        process.cwd(),
-        path.join("public/assets/fonts/Montserrat_font_family/", fontName),
-      );
-      const fontBuffer = fs.readFileSync(fontPath);
-      return fontBuffer.toString("base64");
+      try {
+        const fontPath = path.join(
+          __dirname,
+          "../public/assets/fonts/Montserrat_font_family",
+          fontName,
+        );
+
+        const fontBuffer = fs.readFileSync(fontPath);
+        return fontBuffer.toString("base64");
+      } catch (err) {
+        console.error("Font error:", err);
+        return "";
+      }
     }
 
     const montserratRegular = getFontPath("Montserrat-Regular-400.ttf");
