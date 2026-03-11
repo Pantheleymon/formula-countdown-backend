@@ -1,5 +1,7 @@
 import sharp from "sharp";
 import express from "express";
+import fs from "fs";
+import path from "path";
 import { RaceApiResponse } from "@f1api/sdk";
 
 /**
@@ -88,11 +90,41 @@ app.get(
     let y = (height / 8) * 3;
     let x = columnWidth * 2;
 
+    // Подключаем необходимые шрифты
+    function getFontPath(fontName: string): string {
+      const fontPath = path.join(
+        process.cwd(),
+        path.join("public/assets/fonts/Montserrat_font_family/", fontName),
+      );
+      const fontBuffer = fs.readFileSync(fontPath);
+      return fontBuffer.toString("base64");
+    }
+
+    const montserratRegular = getFontPath("Montserrat-Regular-400.ttf");
+    const montserratLight = getFontPath("Montserrat-Light-300.ttf");
+    const montserratBold = getFontPath("Montserrat-Bold-700.ttf");
+
     const svg = `
       <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
 
         <style>
-          @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&amp;display=swap");
+          @font-face {
+            font-family: "Montserrat";
+            font-weight: 400;
+            src: url(data:font/ttf;base64,${montserratRegular}) format("truetype");
+          }
+
+          @font-face {
+            font-family: "Montserrat";
+            font-weight: 300;
+            src: url(data:font/ttf;base64,${montserratLight}) format("truetype");
+          }
+
+          @font-face {
+            font-family: "Montserrat";
+            font-weight: 700;
+            src: url(data:font/ttf;base64,${montserratBold}) format("truetype");
+          }
 
           text {
             font-family: "Montserrat";
@@ -238,7 +270,11 @@ app.get(
       return rows;
     }
 
-    const buffer = await sharp(Buffer.from(svg)).png().toBuffer();
+    const buffer = await sharp(Buffer.from(svg))
+      .resize(width * 3, height * 3)
+      .png()
+      .resize(width, height)
+      .toBuffer();
 
     res.set("Content-Type", "image/png");
     res.send(buffer);
