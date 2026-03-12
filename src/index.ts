@@ -47,7 +47,7 @@ app.get(
     },
     res: any,
   ) => {
-    const scale = 4;
+    const scale = 1;
 
     const height: number =
       (req.query?.height ? parseInt(req.query?.height) : 1920) * scale;
@@ -242,7 +242,7 @@ app.get(
           columnWidth * 6,
         );
 
-        y += 50 * scale;
+        y += 45 * scale;
       });
     }
 
