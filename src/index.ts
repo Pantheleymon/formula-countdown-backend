@@ -1,9 +1,8 @@
-import sharp from "sharp";
 import express from "express";
 import fs from "fs";
 import path from "path";
+import svg2img from "svg2img";
 import { RaceApiResponse } from "@f1api/sdk";
-import { exec } from "child_process";
 
 /**
  * Интерфейс для расписания сессий гранпри
@@ -56,6 +55,10 @@ app.get(
 
     const race = data?.race[0];
 
+    if (!race) {
+      return res.status(500).send("No race data");
+    }
+
     // порядок отображения сессий
     const order: Array<keyof typeof race.schedule> = [
       "fp1",
@@ -91,17 +94,12 @@ app.get(
     let y = (height / 8) * 3;
     let x = columnWidth * 2;
 
-    // устанавливаем font-config
-    const configFilePath = path.resolve("src", "fonts.conf");
-    process.env.FONTCONFIG_FILE = configFilePath;
-    exec("fc-cache -fv");
-
     // Подключаем необходимые шрифты
     function getFontPath(fontName: string): string {
       try {
         const fontPath = path.join(
-          __dirname,
-          "../public/assets/fonts/Montserrat_font_family",
+          process.cwd(),
+          "public/assets/fonts/Montserrat_font_family",
           fontName,
         );
 
@@ -118,7 +116,7 @@ app.get(
     const montserratBold = getFontPath("Montserrat-Bold-700.ttf");
 
     const svg = `
-      <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+      <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
 
         <style>
           @font-face {
@@ -140,7 +138,7 @@ app.get(
           }
 
           text {
-            font-family: "Montserrat";
+            font-family: "Montserrat", Arial, sans-serif;
           }
         </style>
 
@@ -283,14 +281,13 @@ app.get(
       return rows;
     }
 
-    const buffer = await sharp(Buffer.from(svg))
-      .resize(width * 3, height * 3)
-      .png()
-      .resize(width, height)
-      .toBuffer();
-
-    res.set("Content-Type", "image/png");
-    res.send(buffer);
+    svg2img(svg, function (error, buffer) {
+      if (error) {
+        console.error("Convert to png error:", error);
+      }
+      res.set("Content-Type", "image/png");
+      res.send(buffer);
+    });
   },
 );
 
