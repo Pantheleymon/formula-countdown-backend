@@ -1,7 +1,6 @@
 import express from "express";
-import fs from "fs";
 import path from "path";
-import svg2img from "svg2img";
+import { createCanvas, registerFont } from "canvas";
 import { RaceApiResponse } from "@f1api/sdk";
 
 /**
@@ -32,7 +31,7 @@ app.get(
     },
     res: any,
   ) => {
-    const scale = 2;
+    const scale = 4;
 
     const height: number =
       (req.query?.height ? parseInt(req.query?.height) : 1920) * scale;
@@ -90,103 +89,79 @@ app.get(
     // ширина колонки для колоночной системы
     const columnWidth: number = width / 12;
 
+    // создаем канвас и контекст для рисования
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext("2d");
+
+    // масштабируем и настраиваем канвас для лучшего качества
+
+    ctx.antialias = "subpixel";
+    ctx.patternQuality = "best";
+    ctx.quality = "best";
+    ctx.textDrawingMode = "path";
+
+    ctx.imageSmoothingEnabled = true;
+
+    const fontsPath = path.join(
+      process.cwd(),
+      "public/assets/fonts/Montserrat_font_family",
+    );
+
+    registerFont(path.join(fontsPath, "Montserrat-Regular-400.ttf"), {
+      family: "Montserrat",
+      weight: "400",
+    });
+
+    registerFont(path.join(fontsPath, "Montserrat-Light-300.ttf"), {
+      family: "Montserrat",
+      weight: "300",
+    });
+
+    registerFont(path.join(fontsPath, "Montserrat-Bold-700.ttf"), {
+      family: "Montserrat",
+      weight: "700",
+    });
+
     // отступ для системных элементов
     let y = (height / 8) * 3;
     let x = columnWidth * 2;
 
-    // Подключаем необходимые шрифты
-    function getFontPath(fontName: string): string {
-      try {
-        const fontPath = path.join(
-          process.cwd(),
-          "public/assets/fonts/Montserrat_font_family",
-          fontName,
-        );
+    // фон
+    ctx.fillStyle = "#0a0a0a";
+    ctx.fillRect(0, 0, width, height);
 
-        const fontBuffer = fs.readFileSync(fontPath);
-        return fontBuffer.toString("base64");
-      } catch (err) {
-        console.error("Font error:", err);
-        return "";
-      }
-    }
+    // цвет для текста
+    ctx.fillStyle = "white";
 
-    const montserratRegular = getFontPath("Montserrat-Regular-400.ttf");
-    const montserratLight = getFontPath("Montserrat-Light-300.ttf");
-    const montserratBold = getFontPath("Montserrat-Bold-700.ttf");
+    // название гранпри
+    ctx.font = `300 ${10 * scale}px Montserrat`;
+    ctx.fillText(
+      `Round ${race.round} / ${race.raceName}`,
+      x,
+      y,
+      columnWidth * 8,
+    );
 
-    const svg = `
-      <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+    y += 40 * scale;
 
-        <style>
-          @font-face {
-            font-family: "Montserrat";
-            font-weight: 400;
-            src: url(data:font/ttf;base64,${montserratRegular}) format("truetype");
-          }
+    // заголовок "Weekend Schedule"
+    ctx.font = `bold ${32 * scale}px Montserrat`;
+    ctx.fillText("WEEKEND", x, y, columnWidth * 8);
 
-          @font-face {
-            font-family: "Montserrat";
-            font-weight: 300;
-            src: url(data:font/ttf;base64,${montserratLight}) format("truetype");
-          }
+    y += 30 * scale;
 
-          @font-face {
-            font-family: "Montserrat";
-            font-weight: 700;
-            src: url(data:font/ttf;base64,${montserratBold}) format("truetype");
-          }
+    ctx.font = `300 ${32 * scale}px Montserrat`;
+    ctx.fillText("SCHEDULE", x, y, columnWidth * 8);
 
-          text {
-            font-family: "Montserrat", Arial, sans-serif;
-          }
-        </style>
+    y += 50 * scale;
 
-        <rect width="100%" height="100%" fill="#0a0a0a"/>
-
-        <text
-          x="${x}"
-          y="${y - 10}"
-          font-size="20"
-          font-weight="300"
-          fill="white"
-        >
-          Round ${race.round} / ${race.raceName}
-        </text>
-
-        <text
-          x="${x}"
-          y="${y + 60}"
-          font-size="72"
-          font-weight="700"
-          fill="white"
-        >
-          WEEKEND
-        </text>
-
-        <text
-          x="${x}"
-          y="${y + 120}"
-          font-size="72"
-          font-weight="300"
-          fill="white"
-        >
-          SCHEDULE
-        </text>
-
-        ${createRows()}
-
-      </svg>`;
+    createRows();
 
     /**
      * Функция для создания строк сессий гранпри
      * @returns
      */
-    function createRows(): string {
-      let y = (height / 8) * 3 + 240;
-
-      let rows: string = "";
-
+    function createRows(): void {
       // выводим расписание сессий
       sortedSchedule.forEach(({ type, date, time }) => {
         if (!date || !time) {
@@ -206,10 +181,12 @@ app.get(
           return;
         }
 
+        // тип сессии
+        ctx.font = `bold ${24 * scale}px Montserrat`;
+        ctx.fillText(type.toUpperCase(), x, y, columnWidth * 6);
+
         // дата и время сессии
         const sessionDate = new Date(`${date}T${time}`);
-
-        let countdown = "";
 
         if (showCountDown) {
           // сколько дней осталось до сессии
@@ -223,18 +200,11 @@ app.get(
                 ? "today"
                 : "ended";
 
-          countdown = `
-            <text
-              x="${x + columnWidth * 6}"
-              y="${y}"
-              font-size="32"
-              font-weight="400"
-              fill="white"
-            >
-              ${label}
-            </text>
-            `;
+          ctx.font = `400 ${16 * scale}px Montserrat`;
+          ctx.fillText(label, x + columnWidth * 6, y, columnWidth * 4);
         }
+
+        y += 20 * scale;
 
         // форматируем дату
         const formattedDate = new Date(date)
@@ -252,42 +222,23 @@ app.get(
         });
 
         // выводим дату и время
-        rows += `
-          <text
-            x="${x}"
-            y="${y}"
-            font-size="48"
-            font-weight="700"
-            fill="white"
-          >
-            ${type.toUpperCase()}
-          </text>
+        ctx.font = `300 ${18 * scale}px Montserrat`;
+        ctx.fillText(
+          (formattedDate || "") + " - " + (formattedTime || ""),
+          x,
+          y,
+          columnWidth * 6,
+        );
 
-          ${countdown}
-
-          <text
-            x="${x}"
-            y="${y + 40}"
-            font-size="36"
-            font-weight="300"
-            fill="white"
-          >
-            ${formattedDate} - ${formattedTime}
-          </text>`;
-
-        y += 120;
+        y += 50 * scale;
       });
-
-      return rows;
     }
 
-    svg2img(svg, function (error, buffer) {
-      if (error) {
-        console.error("Convert to png error:", error);
-      }
-      res.set("Content-Type", "image/png");
-      res.send(buffer);
-    });
+    // отправляем PNG
+    const buffer = canvas.toBuffer("image/png");
+
+    res.set("Content-Type", "image/png");
+    res.send(buffer);
   },
 );
 

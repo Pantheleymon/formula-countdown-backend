@@ -15,8 +15,8 @@
   "type": "commonjs",
   "dependencies": {
     "@f1api/sdk": "^1.1.0",
-    "express": "^5.2.1",
-    "svg2img": "^1.0.0-beta.2"
+    "canvas": "^3.2.1",
+    "express": "^5.2.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
