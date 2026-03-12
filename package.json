@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc && cp -r src/fonts dist/fonts",
+    "build": "tsc && cp -r src/fonts dist/fonts && cp -r src/tracks dist/tracks",
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts"
   },

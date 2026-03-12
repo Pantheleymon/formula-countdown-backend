@@ -1,6 +1,6 @@
 import express from "express";
 import path from "path";
-import { createCanvas, registerFont } from "canvas";
+import { createCanvas, registerFont, loadImage } from "canvas";
 import { RaceApiResponse } from "@f1api/sdk";
 
 /**
@@ -56,8 +56,7 @@ app.get(
 
     const currentDate: Date = new Date();
 
-    // TODO: добавить отображение трассы
-    // const showMap: boolean = req.query?.showMap === "true";
+    const showMap: boolean = req.query?.showMap === "true";
     const showPractise: boolean = req.query?.showPractise === "true";
     const showSprint: boolean = req.query?.showSprint === "true";
     const showQualification: boolean = req.query?.showQualification === "true";
@@ -93,10 +92,6 @@ app.get(
         time: race?.schedule[item]?.time ?? "",
       };
     });
-
-    //TODO: добавить отображение трассы
-    // const circuit = race?.circuit;
-    // const circuitId = circuit?.circuitId;
 
     // TODO: Добавить отображение страны и автодрома
     // const circuitName = circuit?.circuitName;
@@ -142,12 +137,33 @@ app.get(
 
     // заголовок "Weekend Schedule"
     ctx.font = `bold ${32 * scale}px Montserrat`;
-    ctx.fillText("WEEKEND", x, y, columnWidth * 8);
+    ctx.fillText("WEEKEND", x, y, columnWidth * 6);
 
     y += 30 * scale;
 
     ctx.font = `300 ${32 * scale}px Montserrat`;
-    ctx.fillText("SCHEDULE", x, y, columnWidth * 8);
+    ctx.fillText("SCHEDULE", x, y, columnWidth * 6);
+
+    // отображение карты трассы
+    if (showMap) {
+      const circuit = race?.circuit;
+      const circuitId = circuit?.circuitId;
+
+      const circuitPath = path.join(__dirname, "tracks", `${circuitId}-1.png`);
+
+      try {
+        const circuitMap = await loadImage(circuitPath);
+        ctx.drawImage(
+          circuitMap,
+          x + columnWidth * 6,
+          y - 60 * scale,
+          columnWidth * 2,
+          columnWidth * 2,
+        );
+      } catch (error) {
+        console.error("Failed to load circuit map:", error);
+      }
+    }
 
     y += 50 * scale;
 
