@@ -47,7 +47,7 @@ app.get(
     },
     res: any,
   ) => {
-    const scale = 1;
+    const scale = 4;
 
     const height: number =
       (req.query?.height ? parseInt(req.query?.height) : 1920) * scale;
@@ -207,7 +207,7 @@ app.get(
 
           const label =
             diffDays > 0
-              ? `in ${diffDays} days`
+              ? `in ${diffDays} day${diffDays > 1 ? "s" : ""}`
               : diffDays === 0
                 ? "today"
                 : "ended";
