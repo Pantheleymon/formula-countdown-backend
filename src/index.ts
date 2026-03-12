@@ -12,6 +12,22 @@ export interface IRaceSchedule {
   time: string;
 }
 
+// Подключаем необходимые шрифты
+registerFont(path.join(__dirname, "fonts/Montserrat-Regular-400.ttf"), {
+  family: "Montserrat",
+  weight: "400",
+});
+
+registerFont(path.join(__dirname, "fonts/Montserrat-Light-300.ttf"), {
+  family: "Montserrat",
+  weight: "300",
+});
+
+registerFont(path.join(__dirname, "fonts/Montserrat-Bold-700.ttf"), {
+  family: "Montserrat",
+  weight: "700",
+});
+
 const app = express();
 
 app.get(
@@ -101,26 +117,6 @@ app.get(
     ctx.textDrawingMode = "path";
 
     ctx.imageSmoothingEnabled = true;
-
-    const fontsPath = path.join(
-      process.cwd(),
-      "public/assets/fonts/Montserrat_font_family",
-    );
-
-    registerFont(path.join(fontsPath, "Montserrat-Regular-400.ttf"), {
-      family: "Montserrat",
-      weight: "400",
-    });
-
-    registerFont(path.join(fontsPath, "Montserrat-Light-300.ttf"), {
-      family: "Montserrat",
-      weight: "300",
-    });
-
-    registerFont(path.join(fontsPath, "Montserrat-Bold-700.ttf"), {
-      family: "Montserrat",
-      weight: "700",
-    });
 
     // отступ для системных элементов
     let y = (height / 8) * 3;
