@@ -231,6 +231,7 @@ app.get(
           hour: "2-digit",
           minute: "2-digit",
           hour12: false,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         });
 
         // выводим дату и время
