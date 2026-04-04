@@ -227,7 +227,7 @@ app.get(
           .toUpperCase();
 
         // форматируем время
-        const formattedTime = sessionDate.toLocaleTimeString([], {
+        const formattedTime = sessionDate.toLocaleTimeString(["ru"], {
           hour: "2-digit",
           minute: "2-digit",
           hour12: false,
