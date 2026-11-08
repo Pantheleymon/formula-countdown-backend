@@ -334,7 +334,10 @@ app.get(
           return;
         }
 
-        if (type === "fp1" && !showPractise) {
+        if (
+          (type === "fp1" || type === "fp2" || type === "fp3") &&
+          !showPractise
+        ) {
           return;
         }
         if (type === "qualy" && !showQualification) {
