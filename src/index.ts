@@ -1,7 +1,6 @@
 import express from "express";
 import path from "path";
 import { createCanvas, registerFont, loadImage } from "canvas";
-import { RaceApiResponse } from "@f1api/sdk";
 
 /**
  * Интерфейс для расписания сессий гранпри
@@ -11,6 +10,92 @@ export interface IRaceSchedule {
   date: string;
   time: string;
 }
+
+/**
+ * Типы ответа api.jolpi.ca (зеркало Ergast API)
+ */
+interface IErgastSession {
+  date: string;
+  time: string;
+}
+
+interface IErgastRace {
+  season: string;
+  round: string;
+  raceName: string;
+  date: string;
+  time: string;
+  Circuit: {
+    circuitId: string;
+    circuitName: string;
+    Location: {
+      locality: string;
+      country: string;
+    };
+  };
+  FirstPractice?: IErgastSession;
+  SecondPractice?: IErgastSession;
+  ThirdPractice?: IErgastSession;
+  Qualifying?: IErgastSession;
+  Sprint?: IErgastSession;
+  SprintQualifying?: IErgastSession;
+}
+
+interface IErgastResponse {
+  MRData: {
+    RaceTable: {
+      Races: IErgastRace[];
+    };
+  };
+}
+
+/**
+ * Нормализованные данные гонки, с которыми работает отрисовка
+ */
+interface INormalizedRace {
+  round: string;
+  raceName: string;
+  circuit: {
+    circuitId: string;
+    circuitName: string;
+    country: string;
+    city: string;
+  };
+  schedule: {
+    fp1: IErgastSession | null;
+    fp2: IErgastSession | null;
+    fp3: IErgastSession | null;
+    sprintQualy: IErgastSession | null;
+    sprintRace: IErgastSession | null;
+    qualy: IErgastSession | null;
+    race: IErgastSession;
+  };
+}
+
+// URL источника данных (Ergast-совместимый API)
+const API_URL = "https://api.jolpi.ca/ergast/f1/current/next.json";
+
+// Время жизни кэша данных о гонке
+const CACHE_TTL_MS = 30 * 60 * 1000;
+
+// Таймаут запроса к API
+const FETCH_TIMEOUT_MS = 15 * 1000;
+
+/**
+ * Соответствие circuitId из Ergast/jolpi локальным файлам карт трасс.
+ * В jolpi идентификаторы трасс отличаются от тех, что использовались
+ * в f1api.dev (по которым названы файлы в src/tracks).
+ */
+const CIRCUIT_MAP_OVERRIDES: Record<string, string> = {
+  albert_park: "melbourne",
+  villeneuve: "montreal",
+  red_bull_ring: "spielberg",
+  spa: "spa-francorchamps",
+  americas: "austin",
+  rodriguez: "mexico-city",
+  vegas: "las-vegas",
+  losail: "lusail",
+};
 
 // Подключаем необходимые шрифты
 registerFont(path.join(__dirname, "fonts/Montserrat-Regular-400.ttf"), {
@@ -27,6 +112,73 @@ registerFont(path.join(__dirname, "fonts/Montserrat-Bold-700.ttf"), {
   family: "Montserrat",
   weight: "700",
 });
+
+// Кэш данных о ближайшей гонке
+let raceCache: { race: INormalizedRace; fetchedAt: number } | null = null;
+
+/**
+ * Приводит circuitId из jolpi к имени локального файла карты трассы.
+ * Сначала ищет точное соответствие в таблице, затем заменяет
+ * подчёркивания на дефисы (marina_bay -> marina-bay и т.п.).
+ */
+function normalizeCircuitId(circuitId: string): string {
+  return CIRCUIT_MAP_OVERRIDES[circuitId] ?? circuitId.replace(/_/g, "-");
+}
+
+/**
+ * Получает данные о ближайшей гонке с кэшированием и обработкой ошибок.
+ */
+async function fetchNextRace(): Promise<INormalizedRace | null> {
+  if (raceCache && Date.now() - raceCache.fetchedAt < CACHE_TTL_MS) {
+    return raceCache.race;
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch(API_URL, { signal: controller.signal });
+  } catch (error) {
+    throw new Error(`Ошибка запроса к API: ${(error as Error).message}`);
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  if (!response.ok) {
+    throw new Error(`API вернул статус ${response.status}`);
+  }
+
+  const data: IErgastResponse = await response.json();
+  const ergastRace = data?.MRData?.RaceTable?.Races?.[0];
+
+  if (!ergastRace) {
+    return null;
+  }
+
+  const race: INormalizedRace = {
+    round: ergastRace.round,
+    raceName: ergastRace.raceName,
+    circuit: {
+      circuitId: ergastRace.Circuit.circuitId,
+      circuitName: ergastRace.Circuit.circuitName,
+      country: ergastRace.Circuit.Location.country,
+      city: ergastRace.Circuit.Location.locality,
+    },
+    schedule: {
+      fp1: ergastRace.FirstPractice ?? null,
+      fp2: ergastRace.SecondPractice ?? null,
+      fp3: ergastRace.ThirdPractice ?? null,
+      sprintQualy: ergastRace.SprintQualifying ?? null,
+      sprintRace: ergastRace.Sprint ?? null,
+      qualy: ergastRace.Qualifying ?? null,
+      race: { date: ergastRace.date, time: ergastRace.time },
+    },
+  };
+
+  raceCache = { race, fetchedAt: Date.now() };
+  return race;
+}
 
 const app = express();
 
@@ -64,17 +216,20 @@ app.get(
     const showCountDown: boolean = req.query?.showCountDown === "true";
 
     // получаем данные о следующем гранпри
-    const response = await fetch("https://f1api.dev/api/current/next");
-    const data: RaceApiResponse = await response.json();
-
-    const race = data?.race[0];
+    let race: INormalizedRace | null;
+    try {
+      race = await fetchNextRace();
+    } catch (error) {
+      console.error("Failed to fetch race data:", error);
+      return res.status(502).send("Failed to fetch race data");
+    }
 
     if (!race) {
-      return res.status(500).send("No race data");
+      return res.status(404).send("No upcoming race");
     }
 
     // порядок отображения сессий
-    const order: Array<keyof typeof race.schedule> = [
+    const order: Array<keyof INormalizedRace["schedule"]> = [
       "fp1",
       "fp2",
       "fp3",
@@ -146,8 +301,7 @@ app.get(
 
     // отображение карты трассы
     if (showMap) {
-      const circuit = race?.circuit;
-      const circuitId = circuit?.circuitId;
+      const circuitId = normalizeCircuitId(race.circuit.circuitId);
 
       const circuitPath = path.join(__dirname, "tracks", `${circuitId}-1.png`);
 

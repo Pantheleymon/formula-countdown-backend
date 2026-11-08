@@ -14,7 +14,6 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@f1api/sdk": "^1.1.0",
     "canvas": "^3.2.1",
     "express": "^5.2.1"
   },
