@@ -19,6 +19,7 @@ import {
   parseDimension,
   resolveTimezone,
   resolveFormat,
+  resolveLocale,
 } from "./validation";
 import { fetchNextRace, getRaceCache } from "./data-source";
 import { renderWallpaper, renderPlaceholder, getFormatMime } from "./renderer";
@@ -103,6 +104,7 @@ app.get("/", imageLimiter, async (req: Request, res: ExpressResponse) => {
     parseDimension(queryString(req.query.height), DEFAULT_HEIGHT) * SCALE;
 
   const timezone = resolveTimezone(queryString(req.query.timezone));
+  const locale = resolveLocale(queryString(req.query.locale));
   const format = resolveFormat(queryString(req.query.format));
 
   const showMap: boolean = queryString(req.query.showMap) === "true";
@@ -118,6 +120,7 @@ app.get("/", imageLimiter, async (req: Request, res: ExpressResponse) => {
     width,
     height,
     timezone,
+    locale,
     format,
     showMap,
     showPractise,
@@ -171,6 +174,7 @@ app.get("/", imageLimiter, async (req: Request, res: ExpressResponse) => {
       width,
       height,
       timezone,
+      locale,
       format,
       showMap,
       showPractise,

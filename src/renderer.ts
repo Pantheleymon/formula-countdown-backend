@@ -9,6 +9,7 @@ import {
   formatSessionDate,
   formatSessionTime,
   formatCircuitLabel,
+  getLabel,
 } from "./format";
 
 // Подключаем необходимые шрифты
@@ -51,6 +52,7 @@ export interface IRenderOptions {
   width: number;
   height: number;
   timezone: string;
+  locale: string;
   format: ImageFormat;
   showMap: boolean;
   showPractise: boolean;
@@ -82,6 +84,7 @@ export async function renderWallpaper(
     width,
     height,
     timezone,
+    locale,
     format,
     showMap,
     showPractise,
@@ -154,12 +157,12 @@ export async function renderWallpaper(
 
   // заголовок "Weekend Schedule"
   ctx.font = `bold ${32 * SCALE}px Montserrat`;
-  ctx.fillText("WEEKEND", x, y, columnWidth * 6);
+  ctx.fillText(getLabel(locale, "weekend"), x, y, columnWidth * 6);
 
   y += 30 * SCALE;
 
   ctx.font = `300 ${32 * SCALE}px Montserrat`;
-  ctx.fillText("SCHEDULE", x, y, columnWidth * 6);
+  ctx.fillText(getLabel(locale, "schedule"), x, y, columnWidth * 6);
 
   // отображение карты трассы
   if (showMap) {
@@ -213,15 +216,15 @@ export async function renderWallpaper(
     const sessionDate = new Date(`${date}T${time}`);
 
     if (showCountDown) {
-      const label = getCountdownLabel(sessionDate, currentDate);
+      const label = getCountdownLabel(sessionDate, currentDate, locale);
       ctx.font = `400 ${16 * SCALE}px Montserrat`;
       ctx.fillText(label, x + columnWidth * 6, y, columnWidth * 4);
     }
 
     y += 20 * SCALE;
 
-    const formattedDate = formatSessionDate(sessionDate, timezone, "en-US");
-    const formattedTime = formatSessionTime(sessionDate, timezone, "ru");
+    const formattedDate = formatSessionDate(sessionDate, timezone, locale);
+    const formattedTime = formatSessionTime(sessionDate, timezone, locale);
 
     // выводим дату и время
     ctx.font = `300 ${18 * SCALE}px Montserrat`;

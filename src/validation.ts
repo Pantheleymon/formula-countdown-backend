@@ -36,6 +36,21 @@ export function resolveFormat(value: string | undefined): ImageFormat {
 }
 
 /**
+ * Проверяет валидность локали. При некорректном значении возвращает "en-US".
+ */
+export function resolveLocale(value: string | undefined): string {
+  if (!value) {
+    return "en-US";
+  }
+  try {
+    new Intl.DateTimeFormat(value);
+    return value;
+  } catch {
+    return "en-US";
+  }
+}
+
+/**
  * Проверяет валидность часового пояса (IANA-имя). При некорректном
  * значении возвращает часовой пояс сервера.
  */

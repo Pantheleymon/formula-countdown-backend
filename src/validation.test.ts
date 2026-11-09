@@ -4,6 +4,7 @@ import {
   parseDimension,
   resolveTimezone,
   resolveFormat,
+  resolveLocale,
 } from "./validation";
 
 describe("queryString", () => {
@@ -58,6 +59,18 @@ describe("resolveFormat", () => {
     expect(resolveFormat("webp")).toBe("png");
     expect(resolveFormat("gif")).toBe("png");
     expect(resolveFormat(undefined)).toBe("png");
+  });
+});
+
+describe("resolveLocale", () => {
+  it("возвращает валидную локаль", () => {
+    expect(resolveLocale("ru")).toBe("ru");
+    expect(resolveLocale("en-GB")).toBe("en-GB");
+  });
+
+  it("возвращает en-US при некорректном значении", () => {
+    expect(resolveLocale("not_a_locale")).toBe("en-US");
+    expect(resolveLocale(undefined)).toBe("en-US");
   });
 });
 

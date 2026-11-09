@@ -4,6 +4,7 @@ import {
   formatSessionDate,
   formatSessionTime,
   formatCircuitLabel,
+  getLabel,
 } from "./format";
 
 describe("getCountdownLabel", () => {
@@ -11,25 +12,43 @@ describe("getCountdownLabel", () => {
   const DAY = 1000 * 60 * 60 * 24;
 
   it("показывает несколько дней", () => {
-    expect(getCountdownLabel(new Date(now.getTime() + 3 * DAY), now)).toBe(
-      "in 3 days",
-    );
+    expect(
+      getCountdownLabel(new Date(now.getTime() + 3 * DAY), now, "en-US"),
+    ).toBe("in 3 days");
   });
 
   it("показывает один день в единственном числе", () => {
-    expect(getCountdownLabel(new Date(now.getTime() + DAY), now)).toBe(
-      "in 1 day",
-    );
+    expect(
+      getCountdownLabel(new Date(now.getTime() + DAY), now, "en-US"),
+    ).toBe("in 1 day");
   });
 
   it("показывает today для текущего момента", () => {
-    expect(getCountdownLabel(now, now)).toBe("today");
+    expect(getCountdownLabel(now, now, "en-US")).toBe("today");
   });
 
   it("показывает ended для прошедшей сессии", () => {
-    expect(getCountdownLabel(new Date(now.getTime() - 2 * DAY), now)).toBe(
-      "ended",
-    );
+    expect(
+      getCountdownLabel(new Date(now.getTime() - 2 * DAY), now, "en-US"),
+    ).toBe("ended");
+  });
+
+  it("локализует подписи на русский", () => {
+    expect(
+      getCountdownLabel(new Date(now.getTime() + 3 * DAY), now, "ru"),
+    ).toBe("через 3 дня");
+    expect(getCountdownLabel(now, now, "ru")).toBe("сегодня");
+    expect(
+      getCountdownLabel(new Date(now.getTime() - 2 * DAY), now, "ru"),
+    ).toBe("завершено");
+  });
+});
+
+describe("getLabel", () => {
+  it("возвращает подпись по локали с фолбэком на английский", () => {
+    expect(getLabel("en", "weekend")).toBe("WEEKEND");
+    expect(getLabel("ru", "weekend")).toBe("УИКЕНД");
+    expect(getLabel("fr", "schedule")).toBe("SCHEDULE");
   });
 });
 
