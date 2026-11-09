@@ -1,5 +1,6 @@
 import path from "path";
 import { createCanvas, registerFont, loadImage } from "canvas";
+import type { Canvas } from "canvas";
 import { SCALE } from "./config";
 import { INormalizedRace, IRaceSchedule } from "./types";
 import { normalizeCircuitId } from "./tracks";
@@ -218,8 +219,48 @@ export async function renderWallpaper(
     y += 45 * SCALE;
   });
 
+  return encodeCanvas(canvas, format);
+}
+
+/**
+ * Кодирует канвас в буфер в заданном формате.
+ */
+function encodeCanvas(canvas: Canvas, format: ImageFormat): Buffer {
   if (format === "jpeg") {
     return canvas.toBuffer("image/jpeg", { quality: 0.9 });
   }
   return canvas.toBuffer("image/png");
+}
+
+/**
+ * Параметры заглушки (изображение в офф-сезон).
+ */
+export interface IPlaceholderOptions {
+  width: number;
+  height: number;
+  format: ImageFormat;
+}
+
+/**
+ * Отрисовывает заглушку на случай, когда ближайшей гонки нет (офф-сезон).
+ */
+export function renderPlaceholder(options: IPlaceholderOptions): Buffer {
+  const { width, height, format } = options;
+
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext("2d");
+
+  ctx.antialias = "subpixel";
+  ctx.quality = "best";
+
+  ctx.fillStyle = "#0a0a0a";
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.fillStyle = "#888888";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = `300 ${Math.round(width / 20)}px Montserrat`;
+  ctx.fillText("NO UPCOMING RACE", width / 2, height / 2, width * 0.9);
+
+  return encodeCanvas(canvas, format);
 }

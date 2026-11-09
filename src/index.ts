@@ -21,7 +21,7 @@ import {
   resolveFormat,
 } from "./validation";
 import { fetchNextRace, getRaceCache } from "./data-source";
-import { renderWallpaper, getFormatMime } from "./renderer";
+import { renderWallpaper, renderPlaceholder, getFormatMime } from "./renderer";
 
 // Кэш сгенерированных изображений
 interface IPngCacheEntry {
@@ -157,7 +157,11 @@ app.get("/", imageLimiter, async (req: Request, res: ExpressResponse) => {
   }
 
   if (!race) {
-    return res.status(404).send("No upcoming race");
+    // офф-сезон: отдаём заглушку вместо текстовой ошибки
+    const placeholder = renderPlaceholder({ width, height, format });
+    res.set("Content-Type", getFormatMime(format));
+    res.set("Cache-Control", `public, max-age=${PNG_MAX_AGE_SECONDS}`);
+    return res.send(placeholder);
   }
 
   await acquireRenderSlot();
