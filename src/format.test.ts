@@ -3,6 +3,7 @@ import {
   getCountdownLabel,
   formatSessionDate,
   formatSessionTime,
+  formatCircuitLabel,
 } from "./format";
 
 describe("getCountdownLabel", () => {
@@ -29,6 +30,28 @@ describe("getCountdownLabel", () => {
     expect(getCountdownLabel(new Date(now.getTime() - 2 * DAY), now)).toBe(
       "ended",
     );
+  });
+});
+
+describe("formatCircuitLabel", () => {
+  it("объединяет город, страну и название трассы", () => {
+    const label = formatCircuitLabel({
+      city: "Las Vegas",
+      country: "USA",
+      circuitName: "Las Vegas Strip Street Circuit",
+    });
+    expect(label).toBe(
+      "LAS VEGAS, USA · LAS VEGAS STRIP STREET CIRCUIT",
+    );
+  });
+
+  it("опускает пустые части", () => {
+    const label = formatCircuitLabel({
+      city: "",
+      country: "USA",
+      circuitName: "",
+    });
+    expect(label).toBe("USA");
   });
 });
 

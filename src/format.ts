@@ -1,4 +1,19 @@
 /**
+ * Формирует подпись «город, страна · название трассы».
+ */
+export function formatCircuitLabel(circuit: {
+  city: string;
+  country: string;
+  circuitName: string;
+}): string {
+  const location = [circuit.city, circuit.country].filter(Boolean).join(", ");
+  return [location, circuit.circuitName]
+    .filter(Boolean)
+    .join(" · ")
+    .toUpperCase();
+}
+
+/**
  * Формирует подпись обратного отсчёта до сессии.
  */
 export function getCountdownLabel(sessionDate: Date, now: Date): string {

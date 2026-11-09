@@ -4,7 +4,12 @@ import type { Canvas } from "canvas";
 import { SCALE } from "./config";
 import { INormalizedRace, IRaceSchedule } from "./types";
 import { normalizeCircuitId } from "./tracks";
-import { getCountdownLabel, formatSessionDate, formatSessionTime } from "./format";
+import {
+  getCountdownLabel,
+  formatSessionDate,
+  formatSessionTime,
+  formatCircuitLabel,
+} from "./format";
 
 // Подключаем необходимые шрифты
 registerFont(path.join(__dirname, "fonts/Montserrat-Regular-400.ttf"), {
@@ -134,7 +139,18 @@ export async function renderWallpaper(
     columnWidth * 8,
   );
 
-  y += 40 * SCALE;
+  y += 22 * SCALE;
+
+  // страна, город и название трассы
+  const circuitLabel = formatCircuitLabel(race.circuit);
+  if (circuitLabel) {
+    ctx.fillStyle = "#aaaaaa";
+    ctx.font = `300 ${8 * SCALE}px Montserrat`;
+    ctx.fillText(circuitLabel, x, y, columnWidth * 8);
+    ctx.fillStyle = "white";
+  }
+
+  y += 18 * SCALE;
 
   // заголовок "Weekend Schedule"
   ctx.font = `bold ${32 * SCALE}px Montserrat`;
