@@ -1,4 +1,5 @@
 import express, { Request, Response as ExpressResponse } from "express";
+import rateLimit from "express-rate-limit";
 import { createHash } from "crypto";
 import {
   DEFAULT_WIDTH,
@@ -8,6 +9,8 @@ import {
   PNG_CACHE_MAX_ENTRIES,
   PNG_MAX_AGE_SECONDS,
   PORT,
+  RATE_LIMIT_WINDOW_MS,
+  RATE_LIMIT_MAX,
 } from "./config";
 import { INormalizedRace } from "./types";
 import { queryString, parseDimension, resolveTimezone } from "./validation";
@@ -45,6 +48,14 @@ function cachePng(key: string, buffer: Buffer, etag: string): void {
 
 const app = express();
 
+// Ограничение частоты запросов на генерацию изображений
+const imageLimiter = rateLimit({
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  limit: RATE_LIMIT_MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Healthcheck: статус сервиса и состояние кэшей
 app.get("/health", (_req: Request, res: ExpressResponse) => {
   const raceCache = getRaceCache();
@@ -58,7 +69,7 @@ app.get("/health", (_req: Request, res: ExpressResponse) => {
   });
 });
 
-app.get("/", async (req: Request, res: ExpressResponse) => {
+app.get("/", imageLimiter, async (req: Request, res: ExpressResponse) => {
   // размеры с валидацией
   const width = parseDimension(queryString(req.query.width), DEFAULT_WIDTH) * SCALE;
   const height =

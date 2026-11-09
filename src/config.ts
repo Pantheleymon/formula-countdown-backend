@@ -29,3 +29,7 @@ export const PNG_MAX_AGE_SECONDS = 600;
 
 // Порт HTTP-сервера
 export const PORT = 3000;
+
+// Ограничение частоты запросов на генерацию изображений
+export const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+export const RATE_LIMIT_MAX = 30;
