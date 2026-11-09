@@ -13,6 +13,12 @@ export const PNG_CACHE_MAX_ENTRIES = 50;
 // Таймаут запроса к API
 export const FETCH_TIMEOUT_MS = 15 * 1000;
 
+// Количество повторных попыток запроса к API
+export const FETCH_RETRIES = 3;
+
+// Базовая задержка между повторными попытками (экспоненциальный backoff)
+export const FETCH_RETRY_BASE_DELAY_MS = 500;
+
 // Масштаб отрисовки (для ретина-качества)
 export const SCALE = 4;
 
