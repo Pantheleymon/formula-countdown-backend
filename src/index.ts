@@ -11,6 +11,7 @@ import {
   PORT,
   RATE_LIMIT_WINDOW_MS,
   RATE_LIMIT_MAX,
+  MAX_CONCURRENT_RENDERS,
 } from "./config";
 import { INormalizedRace } from "./types";
 import { queryString, parseDimension, resolveTimezone } from "./validation";
@@ -44,6 +45,27 @@ function cachePng(key: string, buffer: Buffer, etag: string): void {
     }
   }
   pngCache.set(key, { buffer, etag, generatedAt: Date.now() });
+}
+
+// Простой семафор, ограничивающий число одновременных генераций
+let activeRenders = 0;
+const renderWaiters: Array<() => void> = [];
+
+async function acquireRenderSlot(): Promise<void> {
+  if (activeRenders < MAX_CONCURRENT_RENDERS) {
+    activeRenders++;
+    return;
+  }
+  await new Promise<void>((resolve) => renderWaiters.push(resolve));
+}
+
+function releaseRenderSlot(): void {
+  const next = renderWaiters.shift();
+  if (next) {
+    next();
+  } else {
+    activeRenders--;
+  }
 }
 
 const app = express();
@@ -131,17 +153,23 @@ app.get("/", imageLimiter, async (req: Request, res: ExpressResponse) => {
     return res.status(404).send("No upcoming race");
   }
 
-  const buffer = await renderWallpaper(race, {
-    width,
-    height,
-    timezone,
-    showMap,
-    showPractise,
-    showSprint,
-    showQualification,
-    showRace,
-    showCountDown,
-  });
+  await acquireRenderSlot();
+  let buffer: Buffer;
+  try {
+    buffer = await renderWallpaper(race, {
+      width,
+      height,
+      timezone,
+      showMap,
+      showPractise,
+      showSprint,
+      showQualification,
+      showRace,
+      showCountDown,
+    });
+  } finally {
+    releaseRenderSlot();
+  }
 
   const etag = createHash("sha1").update(buffer).digest("hex").slice(0, 16);
 

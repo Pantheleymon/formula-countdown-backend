@@ -39,3 +39,6 @@ export const PORT = 3000;
 // Ограничение частоты запросов на генерацию изображений
 export const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 export const RATE_LIMIT_MAX = 30;
+
+// Максимальное число одновременных генераций изображений
+export const MAX_CONCURRENT_RENDERS = 3;
