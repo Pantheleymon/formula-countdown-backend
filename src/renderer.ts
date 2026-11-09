@@ -22,12 +22,30 @@ registerFont(path.join(__dirname, "fonts/Montserrat-Bold-700.ttf"), {
 });
 
 /**
+ * Поддерживаемые форматы изображения
+ */
+export type ImageFormat = "png" | "jpeg";
+
+const FORMAT_MIME: Record<ImageFormat, string> = {
+  png: "image/png",
+  jpeg: "image/jpeg",
+};
+
+/**
+ * Возвращает MIME-тип для формата изображения.
+ */
+export function getFormatMime(format: ImageFormat): string {
+  return FORMAT_MIME[format];
+}
+
+/**
  * Параметры отрисовки обоев
  */
 export interface IRenderOptions {
   width: number;
   height: number;
   timezone: string;
+  format: ImageFormat;
   showMap: boolean;
   showPractise: boolean;
   showSprint: boolean;
@@ -58,6 +76,7 @@ export async function renderWallpaper(
     width,
     height,
     timezone,
+    format,
     showMap,
     showPractise,
     showSprint,
@@ -199,5 +218,8 @@ export async function renderWallpaper(
     y += 45 * SCALE;
   });
 
+  if (format === "jpeg") {
+    return canvas.toBuffer("image/jpeg", { quality: 0.9 });
+  }
   return canvas.toBuffer("image/png");
 }

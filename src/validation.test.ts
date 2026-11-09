@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { queryString, parseDimension, resolveTimezone } from "./validation";
+import {
+  queryString,
+  parseDimension,
+  resolveTimezone,
+  resolveFormat,
+} from "./validation";
 
 describe("queryString", () => {
   it("возвращает строку как есть", () => {
@@ -40,6 +45,19 @@ describe("parseDimension", () => {
 
   it("ограничивает снизу минимальным размером", () => {
     expect(parseDimension("100", 1920)).toBe(200);
+  });
+});
+
+describe("resolveFormat", () => {
+  it("возвращает валидный формат", () => {
+    expect(resolveFormat("png")).toBe("png");
+    expect(resolveFormat("jpeg")).toBe("jpeg");
+  });
+
+  it("возвращает png при некорректном значении", () => {
+    expect(resolveFormat("webp")).toBe("png");
+    expect(resolveFormat("gif")).toBe("png");
+    expect(resolveFormat(undefined)).toBe("png");
   });
 });
 

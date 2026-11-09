@@ -14,9 +14,14 @@ import {
   MAX_CONCURRENT_RENDERS,
 } from "./config";
 import { INormalizedRace } from "./types";
-import { queryString, parseDimension, resolveTimezone } from "./validation";
+import {
+  queryString,
+  parseDimension,
+  resolveTimezone,
+  resolveFormat,
+} from "./validation";
 import { fetchNextRace, getRaceCache } from "./data-source";
-import { renderWallpaper } from "./renderer";
+import { renderWallpaper, getFormatMime } from "./renderer";
 
 // Кэш сгенерированных изображений
 interface IPngCacheEntry {
@@ -98,6 +103,7 @@ app.get("/", imageLimiter, async (req: Request, res: ExpressResponse) => {
     parseDimension(queryString(req.query.height), DEFAULT_HEIGHT) * SCALE;
 
   const timezone = resolveTimezone(queryString(req.query.timezone));
+  const format = resolveFormat(queryString(req.query.format));
 
   const showMap: boolean = queryString(req.query.showMap) === "true";
   const showPractise: boolean = queryString(req.query.showPractise) === "true";
@@ -112,6 +118,7 @@ app.get("/", imageLimiter, async (req: Request, res: ExpressResponse) => {
     width,
     height,
     timezone,
+    format,
     showMap,
     showPractise,
     showSprint,
@@ -129,7 +136,7 @@ app.get("/", imageLimiter, async (req: Request, res: ExpressResponse) => {
       return res.status(304).end();
     }
     if (Date.now() - cached.generatedAt < PNG_CACHE_TTL_MS) {
-      res.set("Content-Type", "image/png");
+      res.set("Content-Type", getFormatMime(format));
       return res.send(cached.buffer);
     }
   }
@@ -160,6 +167,7 @@ app.get("/", imageLimiter, async (req: Request, res: ExpressResponse) => {
       width,
       height,
       timezone,
+      format,
       showMap,
       showPractise,
       showSprint,
@@ -175,7 +183,7 @@ app.get("/", imageLimiter, async (req: Request, res: ExpressResponse) => {
 
   cachePng(cacheKey, buffer, etag);
 
-  res.set("Content-Type", "image/png");
+  res.set("Content-Type", getFormatMime(format));
   res.set("ETag", `"${etag}"`);
   res.set("Cache-Control", `public, max-age=${PNG_MAX_AGE_SECONDS}`);
   res.send(buffer);

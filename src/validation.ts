@@ -1,4 +1,5 @@
 import { MIN_DIMENSION, MAX_DIMENSION } from "./config";
+import { ImageFormat } from "./renderer";
 
 /**
  * Извлекает строковое значение query-параметра (Express отдаёт массив
@@ -21,6 +22,17 @@ export function parseDimension(value: string | undefined, fallback: number): num
     return fallback;
   }
   return Math.min(Math.max(parsed, MIN_DIMENSION), MAX_DIMENSION);
+}
+
+/**
+ * Проверяет валидность формата изображения. При некорректном значении
+ * возвращает "png".
+ */
+export function resolveFormat(value: string | undefined): ImageFormat {
+  if (value === "jpeg" || value === "png") {
+    return value;
+  }
+  return "png";
 }
 
 /**
