@@ -1,9 +1,9 @@
+import fs from "fs";
 import path from "path";
 import { createCanvas, registerFont, loadImage } from "canvas";
 import type { Canvas } from "canvas";
-import { SCALE } from "./config";
+import { SCALE, MAX_TRACK_VARIANTS } from "./config";
 import { INormalizedRace, IRaceSchedule } from "./types";
-import { normalizeCircuitId } from "./tracks";
 import {
   getCountdownLabel,
   formatSessionDate,
@@ -72,6 +72,31 @@ const SESSION_ORDER: Array<keyof INormalizedRace["schedule"]> = [
   "qualy",
   "race",
 ];
+
+/**
+ * Загружает карту трассы, перебирая варианты -1, -2, -3 и т.д.,
+ * пока не найдётся существующий файл.
+ */
+async function loadCircuitMap(
+  circuitId: string,
+): Promise<Awaited<ReturnType<typeof loadImage>> | null> {
+  for (let variant = 1; variant <= MAX_TRACK_VARIANTS; variant++) {
+    const circuitPath = path.join(
+      __dirname,
+      "tracks",
+      `${circuitId}-${variant}.png`,
+    );
+    if (!fs.existsSync(circuitPath)) {
+      continue;
+    }
+    try {
+      return await loadImage(circuitPath);
+    } catch (error) {
+      console.error(`Failed to load circuit map ${circuitPath}:`, error);
+    }
+  }
+  return null;
+}
 
 /**
  * Отрисовывает обои с расписанием гонки и возвращает PNG-буфер.
@@ -164,14 +189,10 @@ export async function renderWallpaper(
   ctx.font = `300 ${32 * SCALE}px Montserrat`;
   ctx.fillText(getLabel(locale, "schedule"), x, y, columnWidth * 6);
 
-  // отображение карты трассы
+  // отображение карты трассы (пробуем варианты -1, -2, -3, ...)
   if (showMap) {
-    const circuitId = normalizeCircuitId(race.circuit.circuitId);
-
-    const circuitPath = path.join(__dirname, "tracks", `${circuitId}-1.png`);
-
-    try {
-      const circuitMap = await loadImage(circuitPath);
+    const circuitMap = await loadCircuitMap(race.circuit.circuitId);
+    if (circuitMap) {
       ctx.drawImage(
         circuitMap,
         x + columnWidth * 6,
@@ -179,8 +200,6 @@ export async function renderWallpaper(
         columnWidth * 2,
         columnWidth * 2,
       );
-    } catch (error) {
-      console.error("Failed to load circuit map:", error);
     }
   }
 

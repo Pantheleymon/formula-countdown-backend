@@ -42,3 +42,6 @@ export const RATE_LIMIT_MAX = 30;
 
 // Максимальное число одновременных генераций изображений
 export const MAX_CONCURRENT_RENDERS = 3;
+
+// Максимальное число вариантов карты трассы (-1, -2, -3, ...)
+export const MAX_TRACK_VARIANTS = 10;
