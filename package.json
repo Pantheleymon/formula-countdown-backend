@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
     "build": "tsc && rm -rf dist/fonts dist/tracks && cp -r src/fonts dist/fonts && cp -r src/tracks dist/tracks",
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts"
@@ -21,6 +21,7 @@
     "@types/express": "^5.0.6",
     "@types/node": "^25.3.5",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^5.1.0"
   }
 }
