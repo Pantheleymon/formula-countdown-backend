@@ -1,0 +1,41 @@
+import { MIN_DIMENSION, MAX_DIMENSION } from "./config";
+
+/**
+ * Извлекает строковое значение query-параметра (Express отдаёт массив
+ * для повторяющихся параметров — берём только одиночную строку).
+ */
+export function queryString(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
+
+/**
+ * Валидирует размер: целое число в допустимых границах, иначе значение
+ * по умолчанию. Защищает от NaN/отрицательных/гигантских значений.
+ */
+export function parseDimension(value: string | undefined, fallback: number): number {
+  if (value === undefined) {
+    return fallback;
+  }
+  const parsed = parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return fallback;
+  }
+  return Math.min(Math.max(parsed, MIN_DIMENSION), MAX_DIMENSION);
+}
+
+/**
+ * Проверяет валидность часового пояса (IANA-имя). При некорректном
+ * значении возвращает часовой пояс сервера.
+ */
+export function resolveTimezone(value: string | undefined): string {
+  const serverTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if (!value) {
+    return serverTimezone;
+  }
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: value });
+    return value;
+  } catch {
+    return serverTimezone;
+  }
+}
